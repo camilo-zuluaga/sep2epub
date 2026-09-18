@@ -10,6 +10,11 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+const (
+	MainTitleTag       = "#aueditable h1"
+	TableOfContentsTag = "#toc a"
+)
+
 func ExampleScrape() {
 	// Request the HTML page.
 	res, err := http.Get("https://plato.stanford.edu/entries/consciousness/")
@@ -27,18 +32,54 @@ func ExampleScrape() {
 		log.Fatal(err)
 	}
 
-	TOC(doc, true)
-	// article, err := doc.Find("#preamble, #toc ul li").Html()
-	// if err != nil {
-	// 	log.Fatal(err)
-	//
+	TableOfContents(doc, true)
+	Content(doc)
 }
 
-func TOC(doc *goquery.Document, showSubsections bool) {
-	doc.Find("#toc a").Each(func(i int, link *goquery.Selection) {
-		title := normalizeWhitespaceAndQuotes(link.Text())
-		// href, _ := link.Attr("href")
+type Chapter struct {
+	Title      string
+	Paragraphs []string
+}
 
+func Content(doc *goquery.Document) {
+	var chapters []Chapter
+	var currChapter *Chapter
+
+	doc.Find("#main-text").ChildrenFiltered("h2, p").Each(func(_ int, element *goquery.Selection) {
+		tagName := goquery.NodeName(element)
+		text := strings.TrimSpace(element.Text())
+
+		if text == "" {
+			return
+		}
+
+		switch tagName {
+		case "h2":
+			chapters = append(chapters, Chapter{
+				Title: text,
+			})
+
+			currChapter = &chapters[len(chapters)-1]
+		case "p":
+			currChapter.Paragraphs = append(currChapter.Paragraphs, text)
+		}
+	})
+	fmt.Println()
+	chapter := chapters[0]
+	fmt.Println(chapter.Title)
+	fmt.Println()
+	for _, p := range chapter.Paragraphs {
+		fmt.Println(p)
+		fmt.Println()
+	}
+}
+
+func TableOfContents(doc *goquery.Document, showSubsections bool) {
+	main_title := doc.Find(MainTitleTag).Text()
+	fmt.Printf("%s\n\n", main_title)
+
+	doc.Find(TableOfContentsTag).Each(func(i int, link *goquery.Selection) {
+		title := normalizeWhitespaceAndQuotes(link.Text())
 		if match, _ := regexp.MatchString("[0-9]+.[0-9]+", title); match {
 			if !showSubsections {
 				return
@@ -47,7 +88,6 @@ func TOC(doc *goquery.Document, showSubsections bool) {
 		} else {
 			fmt.Printf("%s \n", title)
 		}
-		// fmt.Printf("[%02d] title=%q \n", i, title)
 	})
 }
 
