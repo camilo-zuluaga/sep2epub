@@ -19,7 +19,7 @@ type Chapter struct {
 	Paragraphs []string
 }
 
-func Content(doc *goquery.Document) {
+func Content(doc *goquery.Document) []Chapter {
 	var chapters []Chapter
 	var currChapter *Chapter
 
@@ -38,20 +38,15 @@ func Content(doc *goquery.Document) {
 			})
 
 			currChapter = &chapters[len(chapters)-1]
+		case "h3":
+			currChapter.Paragraphs = append(currChapter.Paragraphs, text)
 		case "p":
 			currChapter.Paragraphs = append(currChapter.Paragraphs, text)
 		case "blockquote":
 			currChapter.Paragraphs = append(currChapter.Paragraphs, fmt.Sprintf("%q", text))
 		}
 	})
-	fmt.Println()
-	chapter := chapters[0]
-	fmt.Println(chapter.Title)
-	fmt.Println()
-	for _, p := range chapter.Paragraphs {
-		fmt.Println(p)
-		fmt.Println()
-	}
+	return chapters
 }
 
 func TableOfContents(doc *goquery.Document, showSubsections bool) {
