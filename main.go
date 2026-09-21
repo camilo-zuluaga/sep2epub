@@ -51,5 +51,6 @@ func main() {
 
 	sep.TableOfContents(doc, true)
 	l := sep.Content(doc)
+	sep.GetBibliography(doc)
 	debugPrint(l, 1)
 }
