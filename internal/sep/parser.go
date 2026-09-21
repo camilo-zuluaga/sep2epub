@@ -14,12 +14,26 @@ const (
 	TableOfContentsTag = "#toc a"
 )
 
+type HTMLTag int
+
+const (
+	Unknown = iota
+	Paragraph
+	Heading2
+	Heading3
+	BlockQuote
+	List
+)
+
 func Content(doc *goquery.Document) []Chapter {
 	var chapters []Chapter
 	var currChapter *Chapter
 
 	doc.Find(MainTextTag).ChildrenFiltered("h2, p, blockquote, ul").Each(func(_ int, element *goquery.Selection) {
-		tagName := goquery.NodeName(element)
+		tagName, err := parseHTMLTag(goquery.NodeName(element))
+		if err != nil {
+			return
+		}
 		text := normalizeWhitespace(strings.TrimSpace(element.Text()))
 
 		if text == "" {
@@ -27,20 +41,20 @@ func Content(doc *goquery.Document) []Chapter {
 		}
 
 		switch tagName {
-		case "h2":
+		case Heading2:
 			chapters = append(chapters, Chapter{
 				Title: text,
 			})
 
 			currChapter = &chapters[len(chapters)-1]
-		case "h3":
+		case Heading3:
 			currChapter.Paragraphs = append(currChapter.Paragraphs, Block{Type: tagName, Content: text})
-		case "p":
+		case Paragraph:
 			currChapter.Paragraphs = append(currChapter.Paragraphs, Block{Type: tagName, Content: text})
-		case "blockquote":
+		case BlockQuote:
 			currChapter.Paragraphs = append(currChapter.Paragraphs, Block{Type: tagName, Content: text})
-		case "ul":
-			currBlock := Block{Type: "list"}
+		case List:
+			currBlock := Block{Type: List}
 
 			element.ChildrenFiltered("li").Each(func(i int, s *goquery.Selection) {
 				text := normalizeWhitespace(strings.TrimSpace(s.Text()))
@@ -72,4 +86,19 @@ func TableOfContents(doc *goquery.Document, showSubsections bool) {
 
 func normalizeWhitespace(value string) string {
 	return strings.Join(strings.Fields(value), " ")
+}
+
+func parseHTMLTag(s string) (HTMLTag, error) {
+	switch strings.ToLower(s) {
+	case "h2":
+		return Heading2, nil
+	case "p":
+		return Paragraph, nil
+	case "blockquote":
+		return BlockQuote, nil
+	case "ul":
+		return List, nil
+	default:
+		return Unknown, fmt.Errorf("error parsing HTML tag: %q", s)
+	}
 }
