@@ -29,7 +29,7 @@ func Content(doc *goquery.Document) []Chapter {
 	var chapters []Chapter
 	var currChapter *Chapter
 
-	doc.Find(MainTextTag).ChildrenFiltered("h2, p, blockquote, ul").Each(func(_ int, element *goquery.Selection) {
+	doc.Find(MainTextTag).ChildrenFiltered("h2, h3, p, blockquote, ul").Each(func(_ int, element *goquery.Selection) {
 		tagName, err := parseHTMLTag(goquery.NodeName(element))
 		if err != nil {
 			return
@@ -92,6 +92,8 @@ func parseHTMLTag(s string) (HTMLTag, error) {
 	switch strings.ToLower(s) {
 	case "h2":
 		return Heading2, nil
+	case "h3":
+		return Heading3, nil
 	case "p":
 		return Paragraph, nil
 	case "blockquote":
