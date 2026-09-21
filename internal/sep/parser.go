@@ -14,16 +14,11 @@ const (
 	TableOfContentsTag = "#toc a"
 )
 
-type Chapter struct {
-	Title      string
-	Paragraphs []string
-}
-
 func Content(doc *goquery.Document) []Chapter {
 	var chapters []Chapter
 	var currChapter *Chapter
 
-	doc.Find(MainTextTag).ChildrenFiltered("h2, p, blockquote").Each(func(_ int, element *goquery.Selection) {
+	doc.Find(MainTextTag).ChildrenFiltered("h2, p, blockquote, ul").Each(func(_ int, element *goquery.Selection) {
 		tagName := goquery.NodeName(element)
 		text := normalizeWhitespace(strings.TrimSpace(element.Text()))
 
@@ -39,11 +34,20 @@ func Content(doc *goquery.Document) []Chapter {
 
 			currChapter = &chapters[len(chapters)-1]
 		case "h3":
-			currChapter.Paragraphs = append(currChapter.Paragraphs, text)
+			currChapter.Paragraphs = append(currChapter.Paragraphs, Block{Type: tagName, Content: text})
 		case "p":
-			currChapter.Paragraphs = append(currChapter.Paragraphs, text)
+			currChapter.Paragraphs = append(currChapter.Paragraphs, Block{Type: tagName, Content: text})
 		case "blockquote":
-			currChapter.Paragraphs = append(currChapter.Paragraphs, fmt.Sprintf("%q", text))
+			currChapter.Paragraphs = append(currChapter.Paragraphs, Block{Type: tagName, Content: text})
+		case "ul":
+			currBlock := Block{Type: "list"}
+
+			element.ChildrenFiltered("li").Each(func(i int, s *goquery.Selection) {
+				text := normalizeWhitespace(strings.TrimSpace(s.Text()))
+				currBlock.List = append(currBlock.List, text)
+			})
+
+			currChapter.Paragraphs = append(currChapter.Paragraphs, currBlock)
 		}
 	})
 	return chapters
