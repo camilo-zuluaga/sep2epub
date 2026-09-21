@@ -5,6 +5,10 @@ type Chapter struct {
 	Paragraphs []Block
 }
 
+type Bibliography struct {
+	List []string
+}
+
 type Block struct {
 	Type    HTMLTag
 	Content string
