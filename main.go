@@ -18,10 +18,10 @@ func debugPrint(chapters []sep.Chapter, chapterNum int) {
 	for _, p := range chapter.Paragraphs {
 		switch p.Type {
 
-		case "p":
+		case sep.Paragraph:
 			fmt.Println(p.Content)
 			fmt.Println()
-		case "blockquote":
+		case sep.BlockQuote:
 			fmt.Printf("%q \n", p.Content)
 			fmt.Println()
 		}
