@@ -6,7 +6,7 @@ type Chapter struct {
 }
 
 type Block struct {
-	Type    string
+	Type    HTMLTag
 	Content string
 	List    []string
 }
