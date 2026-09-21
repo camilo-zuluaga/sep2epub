@@ -67,6 +67,17 @@ func Content(doc *goquery.Document) []Chapter {
 	return chapters
 }
 
+func GetBibliography(doc *goquery.Document) {
+	var bib Bibliography
+
+	doc.Find("#bibliography").ChildrenFiltered("ul").Each(func(i int, element *goquery.Selection) {
+		text := normalizeWhitespace(strings.TrimSpace(element.Text()))
+		bib.List = append(bib.List, text)
+	})
+
+	fmt.Printf("%+v", bib)
+}
+
 func TableOfContents(doc *goquery.Document, showSubsections bool) {
 	main_title := doc.Find(MainTitleTag).Text()
 	fmt.Printf("%s\n\n", main_title)
