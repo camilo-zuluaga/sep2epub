@@ -18,12 +18,20 @@ func debugPrint(chapters []sep.Chapter, chapterNum int) {
 	for _, p := range chapter.Paragraphs {
 		switch p.Type {
 
+		case sep.Heading3:
+			fmt.Println(p.Content)
+			fmt.Println()
 		case sep.Paragraph:
 			fmt.Println(p.Content)
 			fmt.Println()
 		case sep.BlockQuote:
 			fmt.Printf("%q \n", p.Content)
 			fmt.Println()
+		case sep.List:
+			for _, l := range p.List {
+				fmt.Printf("-  %s \n", l)
+				fmt.Println()
+			}
 		}
 	}
 }
@@ -43,5 +51,5 @@ func main() {
 
 	sep.TableOfContents(doc, true)
 	l := sep.Content(doc)
-	debugPrint(l, 0)
+	debugPrint(l, 1)
 }
