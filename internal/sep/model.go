@@ -20,6 +20,11 @@ type Bibliography struct {
 	List []string
 }
 
+type TOCEntry struct {
+	Title string
+	Href  string // Original entry link, including its section fragment.
+}
+
 type Block struct {
 	Type    HTMLTag
 	Content string
@@ -28,7 +33,9 @@ type Block struct {
 
 // usage for epub generation
 type Book struct {
-	Title    string
-	Authors  []string
-	Chapters []Chapter
+	Title        string
+	Authors      []string
+	TOC          []TOCEntry
+	Chapters     []Chapter
+	Bibliography Bibliography
 }
