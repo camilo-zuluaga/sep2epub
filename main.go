@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sep2epub/internal/epub"
 	"sep2epub/internal/fetcher"
 	"sep2epub/internal/sep"
 
@@ -37,20 +38,34 @@ func debugPrint(chapters []sep.Chapter, chapterNum int) {
 }
 
 func main() {
-	client := fetcher.New()
-	body, err := client.Fetch(context.Background(), "https://plato.stanford.edu/entries/consciousness/")
+	book, err := loadBook(context.Background(), "https://plato.stanford.edu/entries/consciousness/")
 	if err != nil {
 		log.Fatal(err)
+	}
+	if err := epub.Generate(book); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// loadBook fetches an entry once and assembles the data needed by the EPUB generator.
+func loadBook(ctx context.Context, url string) (sep.Book, error) {
+	client := fetcher.New()
+	body, err := client.Fetch(ctx, url)
+	if err != nil {
+		return sep.Book{}, fmt.Errorf("load book: %w", err)
 	}
 	defer body.Close()
 
 	doc, err := goquery.NewDocumentFromReader(body)
 	if err != nil {
-		log.Fatal(err)
+		return sep.Book{}, fmt.Errorf("parse entry: %w", err)
 	}
 
-	sep.TableOfContents(doc, true)
-	l := sep.Content(doc)
-	sep.GetBibliography(doc)
-	debugPrint(l, 1)
+	return sep.Book{
+		Title:        sep.GetTitle(doc),
+		Authors:      sep.GetAuthors(doc),
+		TOC:          sep.TableOfContents(doc, true),
+		Chapters:     sep.Content(doc),
+		Bibliography: sep.GetBibliography(doc),
+	}, nil
 }
