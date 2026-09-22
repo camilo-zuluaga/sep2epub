@@ -63,7 +63,7 @@ func chapterHTML(chapter sep.Chapter) string {
 			builder.WriteString("<ul>")
 			for _, item := range block.List {
 				builder.WriteString("<li>")
-				builder.WriteString(html.EscapeString(item))
+				builder.WriteString(item)
 				builder.WriteString("</li>\n")
 			}
 			builder.WriteString("</ul>\n")
