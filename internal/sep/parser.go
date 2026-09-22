@@ -56,6 +56,31 @@ func Content(doc *goquery.Document) []Chapter {
 	return chapters
 }
 
+func GetAuthors(doc *goquery.Document) []string {
+	var authors []string
+
+	doc.Find("#article-copyright p").ChildrenFiltered(`a[target="other"]`).Each(func(i int, anchor *goquery.Selection) {
+		/*
+						 <div id="article-copyright">
+			    			<p>
+			       				<a href="../../info.html#c">Copyright © 2025</a> by
+			           			<br>
+			             		<a href="https://elizabethbrake.com" target="other">Elizabeth Brake</a>
+			               		<a href="mailto:eebrake%40wisc%2eedu"><em>eebrake<abbr title=" at ">@</abbr>wisc<abbr title=" dot ">.</abbr>edu</em></a>&gt;<br>
+			                 	<a href="https://www.st-andrews.ac.uk/philosophy/people/jrm39/" target="other">Joseph Millum</a>
+			                  	<a href="mailto:jrm39%40st-andrews%2eac%2euk"><em>jrm39<abbr title=" at ">@</abbr>st-andrews<abbr title=" dot ">.</abbr>ac<abbr title=" dot ">.</abbr>uk</em></a>&gt;
+			                </p>
+			            </div>
+		*/
+		author := normalizeWhitespace(anchor.Text())
+		if author != "" {
+			authors = append(authors, author)
+		}
+	})
+
+	return authors
+}
+
 func GetBibliography(doc *goquery.Document) {
 	var bib Bibliography
 
