@@ -14,6 +14,10 @@ const (
 	TableOfContentsTag = "#toc a"
 )
 
+func GetTitle(doc *goquery.Document) string {
+	return strings.Join(strings.Fields(doc.Find(MainTitleTag).First().Text()), " ")
+}
+
 func Content(doc *goquery.Document) []Chapter {
 	var chapters []Chapter
 	var currChapter *Chapter
@@ -96,7 +100,7 @@ func GetAuthors(doc *goquery.Document) []string {
 	return authors
 }
 
-func GetBibliography(doc *goquery.Document) {
+func GetBibliography(doc *goquery.Document) Bibliography {
 	var bib Bibliography
 
 	doc.Find("#bibliography").ChildrenFiltered("ul").Each(func(i int, element *goquery.Selection) {
@@ -106,26 +110,21 @@ func GetBibliography(doc *goquery.Document) {
 		})
 	})
 
-	for _, b := range bib.List {
-		fmt.Printf("- %s\n\n", b)
-	}
+	return bib
 }
 
-func TableOfContents(doc *goquery.Document, showSubsections bool) {
-	main_title := doc.Find(MainTitleTag).Text()
-	fmt.Printf("%s\n\n", main_title)
+func TableOfContents(doc *goquery.Document, showSubsections bool) []TOCEntry {
+	var entries []TOCEntry
 
 	doc.Find(TableOfContentsTag).Each(func(i int, link *goquery.Selection) {
 		title := normalizeWhitespace(link.Text())
-		if match, _ := regexp.MatchString("[0-9]+.[0-9]+", title); match {
-			if !showSubsections {
-				return
-			}
-			fmt.Printf("	%s \n", title)
-		} else {
-			fmt.Printf("%s \n", title)
+		if match, _ := regexp.MatchString(`^[0-9]+\.[0-9]+`, title); match && !showSubsections {
+			return
 		}
+		href, _ := link.Attr("href")
+		entries = append(entries, TOCEntry{Title: title, Href: href})
 	})
+	return entries
 }
 
 func normalizeWhitespace(value string) string {
