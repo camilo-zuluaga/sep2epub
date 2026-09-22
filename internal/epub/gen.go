@@ -3,7 +3,6 @@ package epub
 import (
 	"fmt"
 	"html"
-	"log"
 	"sep2epub/internal/sep"
 	"strings"
 
@@ -13,22 +12,26 @@ import (
 func Generate(book sep.Book) error {
 	e, err := epub.NewEpub(book.Title)
 	if err != nil {
-		log.Println(err)
+		return fmt.Errorf("create EPUB: %w", err)
 	}
 
-	e.SetAuthor("Hingle McCringleberry")
+	e.SetAuthor(strings.Join(book.Authors, ", "))
+
+	// TODO: Map book.TOC links to the generated chapter and subsection filenames.
 
 	for i, chapter := range book.Chapters {
 		body := chapterHTML(chapter)
 
 		_, err := e.AddSection(body, chapter.Title, fmt.Sprintf("chapter-%02d.xhtml", i+1), "")
 		if err != nil {
-			log.Println(err)
+			return fmt.Errorf("add chapter %q: %w", chapter.Title, err)
 		}
 	}
 
-	if err := e.Write("CONSCIOUSNESS.epub"); err != nil {
-		return fmt.Errorf("write EPUB: %w", err)
+	// TODO: Render book.Bibliography as a final section.
+
+	if err := e.Write(fmt.Sprintf("%s.epub", book.Title)); err != nil {
+		return fmt.Errorf("err writing EPUB: %w", err)
 	}
 
 	return nil
