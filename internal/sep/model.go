@@ -29,5 +29,6 @@ type Block struct {
 // usage for epub generation
 type Book struct {
 	Title    string
+	Authors  []string
 	Chapters []Chapter
 }
