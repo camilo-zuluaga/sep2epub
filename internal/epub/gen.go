@@ -25,7 +25,6 @@ func Generate(book sep.Book) error {
 		if err != nil {
 			log.Println(err)
 		}
-
 	}
 
 	if err := e.Write("CONSCIOUSNESS.epub"); err != nil {
@@ -54,11 +53,11 @@ func chapterHTML(chapter sep.Chapter) string {
 			builder.WriteString("</h3>\n")
 		case sep.Paragraph:
 			builder.WriteString("<p>")
-			builder.WriteString(html.EscapeString(block.Content))
+			builder.WriteString(block.Content)
 			builder.WriteString("</p>\n")
 		case sep.BlockQuote:
 			builder.WriteString("<blockquote>")
-			builder.WriteString(html.EscapeString(block.Content))
+			builder.WriteString(block.Content)
 			builder.WriteString("</blockquote>\n")
 		case sep.List:
 			builder.WriteString("<ul>")

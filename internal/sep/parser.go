@@ -23,31 +23,46 @@ func Content(doc *goquery.Document) []Chapter {
 		if err != nil {
 			return
 		}
-		text := normalizeWhitespace(strings.TrimSpace(element.Text()))
-
-		if text == "" {
-			return
-		}
 
 		switch tagName {
 		case Heading2:
+			text := normalizeWhitespace(strings.TrimSpace(element.Text()))
+			if text == "" {
+				return
+			}
+
 			chapters = append(chapters, Chapter{
 				Title: text,
 			})
 
 			currChapter = &chapters[len(chapters)-1]
 		case Heading3:
+			text := normalizeWhitespace(strings.TrimSpace(element.Text()))
+			if text == "" {
+				return
+			}
+
 			currChapter.Paragraphs = append(currChapter.Paragraphs, Block{Type: tagName, Content: text})
-		case Paragraph:
-			currChapter.Paragraphs = append(currChapter.Paragraphs, Block{Type: tagName, Content: text})
-		case BlockQuote:
-			currChapter.Paragraphs = append(currChapter.Paragraphs, Block{Type: tagName, Content: text})
+		case Paragraph, BlockQuote:
+			content, err := element.Html()
+			if err != nil {
+				return
+			}
+
+			content = normalizeWhitespace(content)
+
+			currChapter.Paragraphs = append(currChapter.Paragraphs, Block{Type: tagName, Content: content})
 		case List:
 			currBlock := Block{Type: tagName}
 
 			element.ChildrenFiltered("li").Each(func(i int, s *goquery.Selection) {
-				text := normalizeWhitespace(strings.TrimSpace(s.Text()))
-				currBlock.List = append(currBlock.List, text)
+				content, err := element.Html()
+				if err != nil {
+					return
+				}
+
+				content = normalizeWhitespace(content)
+				currBlock.List = append(currBlock.List, content)
 			})
 
 			currChapter.Paragraphs = append(currChapter.Paragraphs, currBlock)
