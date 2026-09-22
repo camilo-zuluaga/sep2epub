@@ -14,17 +14,6 @@ const (
 	TableOfContentsTag = "#toc a"
 )
 
-type HTMLTag int
-
-const (
-	Unknown = iota
-	Paragraph
-	Heading2
-	Heading3
-	BlockQuote
-	List
-)
-
 func Content(doc *goquery.Document) []Chapter {
 	var chapters []Chapter
 	var currChapter *Chapter
@@ -54,7 +43,7 @@ func Content(doc *goquery.Document) []Chapter {
 		case BlockQuote:
 			currChapter.Paragraphs = append(currChapter.Paragraphs, Block{Type: tagName, Content: text})
 		case List:
-			currBlock := Block{Type: List}
+			currBlock := Block{Type: tagName}
 
 			element.ChildrenFiltered("li").Each(func(i int, s *goquery.Selection) {
 				text := normalizeWhitespace(strings.TrimSpace(s.Text()))
@@ -71,11 +60,15 @@ func GetBibliography(doc *goquery.Document) {
 	var bib Bibliography
 
 	doc.Find("#bibliography").ChildrenFiltered("ul").Each(func(i int, element *goquery.Selection) {
-		text := normalizeWhitespace(strings.TrimSpace(element.Text()))
-		bib.List = append(bib.List, text)
+		element.ChildrenFiltered("li").Each(func(i int, s *goquery.Selection) {
+			text := normalizeWhitespace(strings.TrimSpace(s.Text()))
+			bib.List = append(bib.List, text)
+		})
 	})
 
-	fmt.Printf("%+v", bib)
+	for _, b := range bib.List {
+		fmt.Printf("- %s\n\n", b)
+	}
 }
 
 func TableOfContents(doc *goquery.Document, showSubsections bool) {
