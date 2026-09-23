@@ -36,7 +36,7 @@ func Generate(book sep.Book) error {
 func sections(book sep.Book) []section {
 	s := []section{
 		{title: "Preamble", body: preambleHTML(book), filename: "preamble.xhtml"},
-		{title: "Table of Contents", body: tocHTML(book.TOC), filename: "toc.xhtml"},
+		// {title: "Table of Contents", body: tocHTML(book.TOC), filename: "toc.xhtml"},
 	}
 
 	for i, chapter := range book.Chapters {
@@ -124,7 +124,7 @@ func tocHTML(toc []sep.TOCEntry) string {
 		builder.WriteString(`<li><a href="`)
 		builder.WriteString(html.EscapeString(href))
 		builder.WriteString(`" style="text-decoration:none;">`)
-		builder.WriteString(html.EscapeString(entry.Title))
+		builder.WriteString(entry.Title)
 		builder.WriteString("</a></li>\n")
 	}
 
@@ -167,6 +167,9 @@ func preambleHTML(b sep.Book) string {
 	builder.WriteString("<p>")
 	builder.WriteString(b.Preamble)
 	builder.WriteString("</p>\n")
+
+	toc := tocHTML(b.TOC)
+	builder.WriteString(toc)
 
 	return builder.String()
 }
