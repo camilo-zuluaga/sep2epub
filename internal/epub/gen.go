@@ -28,8 +28,6 @@ func Generate(book sep.Book) error {
 		return fmt.Errorf("add chapter %q: %w", "err", err)
 	}
 
-	// TODO: Map book.TOC links to the generated chapter and subsection filenames.
-
 	for i, chapter := range book.Chapters {
 		body := chapterHTML(chapter)
 
@@ -43,8 +41,6 @@ func Generate(book sep.Book) error {
 	if err != nil {
 		return fmt.Errorf("add chapter %q: %w", "err", err)
 	}
-
-	// TODO: Render book.Bibliography as a final section.
 
 	if err := e.Write(fmt.Sprintf("%s.epub", book.Title)); err != nil {
 		return fmt.Errorf("err writing EPUB: %w", err)

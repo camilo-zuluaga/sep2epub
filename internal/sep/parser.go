@@ -65,8 +65,8 @@ func Content(doc *goquery.Document) []Chapter {
 		case List:
 			currBlock := Block{Type: tagName}
 
-			element.ChildrenFiltered("li").Each(func(i int, s *goquery.Selection) {
-				content, err := element.Html()
+			element.ChildrenFiltered("li").Each(func(i int, li *goquery.Selection) {
+				content, err := li.Html()
 				if err != nil {
 					return
 				}
@@ -111,7 +111,7 @@ func GetBibliography(doc *goquery.Document) Bibliography {
 
 	doc.Find("#bibliography").ChildrenFiltered("ul").Each(func(i int, element *goquery.Selection) {
 		element.ChildrenFiltered("li").Each(func(i int, s *goquery.Selection) {
-			htmlText, _ := element.Html()
+			htmlText, _ := s.Html()
 			text := normalizeWhitespace(strings.TrimSpace(htmlText))
 			bib.List = append(bib.List, text)
 		})
