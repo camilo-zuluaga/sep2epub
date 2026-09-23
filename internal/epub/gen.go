@@ -22,7 +22,12 @@ func Generate(book sep.Book) error {
 	}
 	e.SetAuthor(strings.Join(book.Authors, ", "))
 
-	for _, s := range sections(book) {
+	imagePath, err := e.AddImage("./sep-man-blackshadow.svg", "sep-logo.svg")
+	if err != nil {
+		return fmt.Errorf("add cover image: %w", err)
+	}
+
+	for _, s := range sections(book, imagePath) {
 		if _, err := e.AddSection(s.body, s.title, s.filename, ""); err != nil {
 			return fmt.Errorf("add section %q: %w", s.title, err)
 		}
@@ -33,8 +38,9 @@ func Generate(book sep.Book) error {
 	return nil
 }
 
-func sections(book sep.Book) []section {
+func sections(book sep.Book, imagePath string) []section {
 	s := []section{
+		{title: "", body: coverHTML(book, imagePath), filename: "cover.xhtml"},
 		{title: "Preamble", body: preambleHTML(book), filename: "preamble.xhtml"},
 		// {title: "Table of Contents", body: tocHTML(book.TOC), filename: "toc.xhtml"},
 	}
@@ -170,6 +176,95 @@ func preambleHTML(b sep.Book) string {
 
 	toc := tocHTML(b.TOC)
 	builder.WriteString(toc)
+
+	return builder.String()
+}
+
+func coverHTML(book sep.Book, imagePath string) string {
+	var builder strings.Builder
+
+	builder.WriteString(`
+		<div style="
+			text-align: center;
+			max-width: 35em;
+			margin: 0 auto;
+			padding: 3em 1.5em;
+		">
+	`)
+
+	builder.WriteString(`
+		<h1 style="
+			font-family: serif;
+			font-size: 2em;
+			font-weight: normal;
+			font-variant: small-caps;
+			letter-spacing: 0.06em;
+			line-height: 1.35;
+			margin: 0;
+		">
+			Stanford Encyclopedia<br/>
+			of Philosophy
+		</h1>
+	`)
+
+	builder.WriteString(`
+		<div style="
+			height: 14em;
+			margin: 2em auto;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		">
+			<img src="`)
+	builder.WriteString(html.EscapeString(imagePath))
+	builder.WriteString(`"
+				alt="Stanford Encyclopedia of Philosophy"
+				style="
+					display: block;
+					max-width: 10em;
+					max-height: 12em;
+					width: auto;
+					height: auto;
+					margin: 0 auto;
+				"
+			/>
+		</div>
+	`)
+
+	builder.WriteString(`
+		<h2 style="
+			font-family: serif;
+			font-size: 1.4em;
+			font-weight: normal;
+			margin: 0 0 1em 0;
+		">
+	`)
+	builder.WriteString(html.EscapeString(book.Title))
+	builder.WriteString("</h2>\n")
+
+	if len(book.Authors) > 0 {
+		builder.WriteString(`
+			<p style="
+				font-family: serif;
+				font-size: 1em;
+				line-height: 1.6;
+				margin: 0;
+			">
+				<span>By</span><br/>
+		`)
+
+		for i, author := range book.Authors {
+			if i > 0 {
+				builder.WriteString("<br/>\n")
+			}
+
+			builder.WriteString(html.EscapeString(author))
+		}
+
+		builder.WriteString("</p>\n")
+	}
+
+	builder.WriteString("</div>\n")
 
 	return builder.String()
 }
