@@ -126,12 +126,14 @@ func GetBibliography(doc *goquery.Document) Bibliography {
 	return bib
 }
 
+var subChapter = regexp.MustCompile(`^[0-9]+\.[0-9]+`)
+
 func TableOfContents(doc *goquery.Document, showSubsections bool) []TOCEntry {
 	var entries []TOCEntry
 
 	doc.Find(TableOfContentsTag).Each(func(i int, link *goquery.Selection) {
 		title := normalizeWhitespace(link.Text())
-		if match, _ := regexp.MatchString(`^[0-9]+\.[0-9]+`, title); match && !showSubsections {
+		if match := subChapter.MatchString(title); match && !showSubsections {
 			return
 		}
 		href, _ := link.Attr("href")
