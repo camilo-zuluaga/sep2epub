@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"sep2epub/internal/sep"
 	"strings"
+	"unicode"
 
 	"github.com/go-shiori/go-epub"
 )
@@ -34,15 +35,15 @@ func Generate(book sep.Book) error {
 
 func sections(book sep.Book) []section {
 	s := []section{
-		{title: "Preamble", body: preambleHTML(book)},
-		{title: "Table of Contents", body: tocHTML(book.TOC)},
+		{title: "Preamble", body: preambleHTML(book), filename: "preamble.xhtml"},
+		{title: "Table of Contents", body: tocHTML(book.TOC), filename: "toc.xhtml"},
 	}
 
 	for i, chapter := range book.Chapters {
 		s = append(s, section{
 			title:    chapter.Title,
 			body:     chapterHTML(chapter),
-			filename: fmt.Sprintf("chapter-%02d.xhtml", i+1),
+			filename: chapterFilename(i),
 		})
 	}
 
@@ -57,13 +58,17 @@ func chapterHTML(chapter sep.Chapter) string {
 	builder.WriteString("</h1>\n")
 
 	for _, block := range chapter.Paragraphs {
+		id := slugify(block.Content)
+
 		switch block.Type {
 		case sep.Heading2:
 			builder.WriteString("<h2>")
 			builder.WriteString(html.EscapeString(block.Content))
 			builder.WriteString("</h2>\n")
 		case sep.Heading3:
-			builder.WriteString("<h3>")
+			builder.WriteString(`<h3 id="`)
+			builder.WriteString(id)
+			builder.WriteString(`">`)
 			builder.WriteString(html.EscapeString(block.Content))
 			builder.WriteString("</h3>\n")
 		case sep.Paragraph:
@@ -95,8 +100,10 @@ func tocHTML(toc []sep.TOCEntry) string {
 	builder.WriteString("<h1>Table of Contents</h1>\n")
 	builder.WriteString("<ul>\n")
 
+	chapterIndex := -1
 	inSub := false
 	for _, entry := range toc {
+		var href string
 		isSub := subEntry.MatchString(entry.Title)
 
 		if isSub && !inSub {
@@ -107,9 +114,18 @@ func tocHTML(toc []sep.TOCEntry) string {
 			inSub = false
 		}
 
-		builder.WriteString("<li>")
+		if inSub {
+			href = chapterFilename(chapterIndex) + "#" + slugify(entry.Title)
+		} else {
+			chapterIndex++
+			href = chapterFilename(chapterIndex)
+		}
+
+		builder.WriteString(`<li><a href="`)
+		builder.WriteString(html.EscapeString(href))
+		builder.WriteString(`" style="text-decoration:none;">`)
 		builder.WriteString(html.EscapeString(entry.Title))
-		builder.WriteString("</li>\n")
+		builder.WriteString("</a></li>\n")
 	}
 
 	if inSub {
@@ -153,4 +169,30 @@ func preambleHTML(b sep.Book) string {
 	builder.WriteString("</p>\n")
 
 	return builder.String()
+}
+
+func chapterFilename(idx int) string {
+	return fmt.Sprintf("chapter-%02d.xhtml", idx+1)
+}
+
+func slugify(value string) string {
+	value = strings.ToLower(value)
+	value = strings.TrimSpace(value)
+
+	var builder strings.Builder
+	previousWasSeparator := false
+
+	for _, r := range value {
+		switch {
+		case unicode.IsLetter(r), unicode.IsDigit(r):
+			builder.WriteRune(r)
+			previousWasSeparator = false
+
+		case !previousWasSeparator:
+			builder.WriteRune('-')
+			previousWasSeparator = true
+		}
+	}
+
+	return strings.Trim(builder.String(), "-")
 }
