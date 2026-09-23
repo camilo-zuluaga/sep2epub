@@ -22,7 +22,7 @@ type Bibliography struct {
 
 type TOCEntry struct {
 	Title string
-	Href  string 
+	Href  string
 }
 
 type Block struct {
@@ -34,6 +34,7 @@ type Block struct {
 // usage for epub generation
 type Book struct {
 	Title        string
+	Preamble     string
 	Authors      []string
 	TOC          []TOCEntry
 	Chapters     []Chapter
