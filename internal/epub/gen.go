@@ -10,43 +10,43 @@ import (
 	"github.com/go-shiori/go-epub"
 )
 
+type section struct {
+	title, body, filename string
+}
+
 func Generate(book sep.Book) error {
 	e, err := epub.NewEpub(book.Title)
 	if err != nil {
 		return fmt.Errorf("create EPUB: %w", err)
 	}
-
 	e.SetAuthor(strings.Join(book.Authors, ", "))
 
-	_, err = e.AddSection(preambleHTML(book), "Preamble", "", "")
-	if err != nil {
-		return fmt.Errorf("add chapter %q: %w", "err", err)
-	}
-
-	_, err = e.AddSection(tocHTML(book.TOC), "Table of Contents", "", "")
-	if err != nil {
-		return fmt.Errorf("add chapter %q: %w", "err", err)
-	}
-
-	for i, chapter := range book.Chapters {
-		body := chapterHTML(chapter)
-
-		_, err := e.AddSection(body, chapter.Title, fmt.Sprintf("chapter-%02d.xhtml", i+1), "")
-		if err != nil {
-			return fmt.Errorf("add chapter %q: %w", chapter.Title, err)
+	for _, s := range sections(book) {
+		if _, err := e.AddSection(s.body, s.title, s.filename, ""); err != nil {
+			return fmt.Errorf("add section %q: %w", s.title, err)
 		}
 	}
-
-	_, err = e.AddSection(bibHTML(book.Bibliography), "Bibliography", "", "")
-	if err != nil {
-		return fmt.Errorf("add chapter %q: %w", "err", err)
-	}
-
 	if err := e.Write(fmt.Sprintf("%s.epub", book.Title)); err != nil {
 		return fmt.Errorf("err writing EPUB: %w", err)
 	}
-
 	return nil
+}
+
+func sections(book sep.Book) []section {
+	s := []section{
+		{title: "Preamble", body: preambleHTML(book)},
+		{title: "Table of Contents", body: tocHTML(book.TOC)},
+	}
+
+	for i, chapter := range book.Chapters {
+		s = append(s, section{
+			title:    chapter.Title,
+			body:     chapterHTML(chapter),
+			filename: fmt.Sprintf("chapter-%02d.xhtml", i+1),
+		})
+	}
+
+	return append(s, section{title: "Bibliography", body: bibHTML(book.Bibliography)})
 }
 
 func chapterHTML(chapter sep.Chapter) string {
@@ -87,6 +87,8 @@ func chapterHTML(chapter sep.Chapter) string {
 	return builder.String()
 }
 
+var subEntry = regexp.MustCompile(`^[0-9]+\.[0-9]+`)
+
 func tocHTML(toc []sep.TOCEntry) string {
 	var builder strings.Builder
 
@@ -95,7 +97,7 @@ func tocHTML(toc []sep.TOCEntry) string {
 
 	inSub := false
 	for _, entry := range toc {
-		isSub, _ := regexp.MatchString(`^[0-9]+\.[0-9]+`, entry.Title)
+		isSub := subEntry.MatchString(entry.Title)
 
 		if isSub && !inSub {
 			builder.WriteString("<ul>\n")
@@ -141,6 +143,10 @@ func preambleHTML(b sep.Book) string {
 	builder.WriteString("<h1>")
 	builder.WriteString(b.Title)
 	builder.WriteString("</h1>\n")
+
+	builder.WriteString("<p>")
+	builder.WriteString(b.PubInfo)
+	builder.WriteString("</p>\n")
 
 	builder.WriteString("<p>")
 	builder.WriteString(b.Preamble)
