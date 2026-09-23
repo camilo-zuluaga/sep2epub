@@ -34,6 +34,11 @@ func Generate(book sep.Book) error {
 		}
 	}
 
+	_, err = e.AddSection(bibHTML(book.Bibliography), "Bibliography", "", "")
+	if err != nil {
+		return fmt.Errorf("add chapter %q: %w", "err", err)
+	}
+
 	// TODO: Render book.Bibliography as a final section.
 
 	if err := e.Write(fmt.Sprintf("%s.epub", book.Title)); err != nil {
@@ -106,6 +111,22 @@ func tocHTML(toc []sep.TOCEntry) string {
 
 	if inSub {
 		builder.WriteString("</ul>\n")
+	}
+
+	builder.WriteString("</ul>\n")
+
+	return builder.String()
+}
+
+func bibHTML(bib sep.Bibliography) string {
+	var builder strings.Builder
+
+	builder.WriteString("<h1>Bibliography</h1>\n")
+	builder.WriteString("<ul>")
+	for _, ref := range bib.List {
+		builder.WriteString("<li>")
+		builder.WriteString(ref)
+		builder.WriteString("</li>\n")
 	}
 
 	builder.WriteString("</ul>\n")
