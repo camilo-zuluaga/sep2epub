@@ -12,10 +12,16 @@ const (
 	MainTextTag        = "#main-text"
 	MainTitleTag       = "#aueditable h1"
 	TableOfContentsTag = "#toc a"
+	PreambleTag        = "#preamble"
 )
 
 func GetTitle(doc *goquery.Document) string {
-	return strings.Join(strings.Fields(doc.Find(MainTitleTag).First().Text()), " ")
+	return normalizeWhitespace(doc.Find(MainTitleTag).First().Text())
+}
+
+func GetPreamble(doc *goquery.Document) string {
+	htmlText, _ := doc.Find(PreambleTag).First().Html()
+	return normalizeWhitespace(htmlText)
 }
 
 func Content(doc *goquery.Document) []Chapter {
