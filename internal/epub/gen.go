@@ -18,6 +18,11 @@ func Generate(book sep.Book) error {
 
 	e.SetAuthor(strings.Join(book.Authors, ", "))
 
+	_, err = e.AddSection(preambleHTML(book), "Preamble", "", "")
+	if err != nil {
+		return fmt.Errorf("add chapter %q: %w", "err", err)
+	}
+
 	_, err = e.AddSection(tocHTML(book.TOC), "Table of Contents", "", "")
 	if err != nil {
 		return fmt.Errorf("add chapter %q: %w", "err", err)
@@ -130,6 +135,20 @@ func bibHTML(bib sep.Bibliography) string {
 	}
 
 	builder.WriteString("</ul>\n")
+
+	return builder.String()
+}
+
+func preambleHTML(b sep.Book) string {
+	var builder strings.Builder
+
+	builder.WriteString("<h1>")
+	builder.WriteString(b.Title)
+	builder.WriteString("</h1>\n")
+
+	builder.WriteString("<p>")
+	builder.WriteString(b.Preamble)
+	builder.WriteString("</p>\n")
 
 	return builder.String()
 }
