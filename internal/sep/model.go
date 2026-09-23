@@ -22,7 +22,7 @@ type Bibliography struct {
 
 type TOCEntry struct {
 	Title string
-	Href  string // Original entry link, including its section fragment.
+	Href  string 
 }
 
 type Block struct {

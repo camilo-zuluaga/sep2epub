@@ -47,7 +47,6 @@ func main() {
 	}
 }
 
-// loadBook fetches an entry once and assembles the data needed by the EPUB generator.
 func loadBook(ctx context.Context, url string) (sep.Book, error) {
 	client := fetcher.New()
 	body, err := client.Fetch(ctx, url)
