@@ -3,6 +3,7 @@ package epub
 import (
 	"fmt"
 	"html"
+	"regexp"
 	"sep2epub/internal/sep"
 	"strings"
 
@@ -16,6 +17,11 @@ func Generate(book sep.Book) error {
 	}
 
 	e.SetAuthor(strings.Join(book.Authors, ", "))
+
+	_, err = e.AddSection(tocHTML(book.TOC), "Table of Contents", "", "")
+	if err != nil {
+		return fmt.Errorf("add chapter %q: %w", "err", err)
+	}
 
 	// TODO: Map book.TOC links to the generated chapter and subsection filenames.
 
@@ -72,5 +78,37 @@ func chapterHTML(chapter sep.Chapter) string {
 			builder.WriteString("</ul>\n")
 		}
 	}
+	return builder.String()
+}
+
+func tocHTML(toc []sep.TOCEntry) string {
+	var builder strings.Builder
+
+	builder.WriteString("<h1>Table of Contents</h1>\n")
+	builder.WriteString("<ul>\n")
+
+	inSub := false
+	for _, entry := range toc {
+		isSub, _ := regexp.MatchString(`^[0-9]+\.[0-9]+`, entry.Title)
+
+		if isSub && !inSub {
+			builder.WriteString("<ul>\n")
+			inSub = true
+		} else if !isSub && inSub {
+			builder.WriteString("</ul>\n")
+			inSub = false
+		}
+
+		builder.WriteString("<li>")
+		builder.WriteString(html.EscapeString(entry.Title))
+		builder.WriteString("</li>\n")
+	}
+
+	if inSub {
+		builder.WriteString("</ul>\n")
+	}
+
+	builder.WriteString("</ul>\n")
+
 	return builder.String()
 }
