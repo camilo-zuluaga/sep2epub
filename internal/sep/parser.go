@@ -105,7 +105,8 @@ func GetBibliography(doc *goquery.Document) Bibliography {
 
 	doc.Find("#bibliography").ChildrenFiltered("ul").Each(func(i int, element *goquery.Selection) {
 		element.ChildrenFiltered("li").Each(func(i int, s *goquery.Selection) {
-			text := normalizeWhitespace(strings.TrimSpace(s.Text()))
+			htmlText, _ := element.Html()
+			text := normalizeWhitespace(strings.TrimSpace(htmlText))
 			bib.List = append(bib.List, text)
 		})
 	})
