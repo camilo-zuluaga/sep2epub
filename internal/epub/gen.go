@@ -3,6 +3,7 @@ package epub
 import (
 	"fmt"
 	"html"
+	"regexp"
 	"sep2epub/internal/sep"
 	"strings"
 
@@ -17,7 +18,15 @@ func Generate(book sep.Book) error {
 
 	e.SetAuthor(strings.Join(book.Authors, ", "))
 
-	// TODO: Map book.TOC links to the generated chapter and subsection filenames.
+	_, err = e.AddSection(preambleHTML(book), "Preamble", "", "")
+	if err != nil {
+		return fmt.Errorf("add chapter %q: %w", "err", err)
+	}
+
+	_, err = e.AddSection(tocHTML(book.TOC), "Table of Contents", "", "")
+	if err != nil {
+		return fmt.Errorf("add chapter %q: %w", "err", err)
+	}
 
 	for i, chapter := range book.Chapters {
 		body := chapterHTML(chapter)
@@ -28,7 +37,10 @@ func Generate(book sep.Book) error {
 		}
 	}
 
-	// TODO: Render book.Bibliography as a final section.
+	_, err = e.AddSection(bibHTML(book.Bibliography), "Bibliography", "", "")
+	if err != nil {
+		return fmt.Errorf("add chapter %q: %w", "err", err)
+	}
 
 	if err := e.Write(fmt.Sprintf("%s.epub", book.Title)); err != nil {
 		return fmt.Errorf("err writing EPUB: %w", err)
@@ -72,5 +84,67 @@ func chapterHTML(chapter sep.Chapter) string {
 			builder.WriteString("</ul>\n")
 		}
 	}
+	return builder.String()
+}
+
+func tocHTML(toc []sep.TOCEntry) string {
+	var builder strings.Builder
+
+	builder.WriteString("<h1>Table of Contents</h1>\n")
+	builder.WriteString("<ul>\n")
+
+	inSub := false
+	for _, entry := range toc {
+		isSub, _ := regexp.MatchString(`^[0-9]+\.[0-9]+`, entry.Title)
+
+		if isSub && !inSub {
+			builder.WriteString("<ul>\n")
+			inSub = true
+		} else if !isSub && inSub {
+			builder.WriteString("</ul>\n")
+			inSub = false
+		}
+
+		builder.WriteString("<li>")
+		builder.WriteString(html.EscapeString(entry.Title))
+		builder.WriteString("</li>\n")
+	}
+
+	if inSub {
+		builder.WriteString("</ul>\n")
+	}
+
+	builder.WriteString("</ul>\n")
+
+	return builder.String()
+}
+
+func bibHTML(bib sep.Bibliography) string {
+	var builder strings.Builder
+
+	builder.WriteString("<h1>Bibliography</h1>\n")
+	builder.WriteString("<ul>")
+	for _, ref := range bib.List {
+		builder.WriteString("<li>")
+		builder.WriteString(ref)
+		builder.WriteString("</li>\n")
+	}
+
+	builder.WriteString("</ul>\n")
+
+	return builder.String()
+}
+
+func preambleHTML(b sep.Book) string {
+	var builder strings.Builder
+
+	builder.WriteString("<h1>")
+	builder.WriteString(b.Title)
+	builder.WriteString("</h1>\n")
+
+	builder.WriteString("<p>")
+	builder.WriteString(b.Preamble)
+	builder.WriteString("</p>\n")
+
 	return builder.String()
 }

@@ -62,6 +62,7 @@ func loadBook(ctx context.Context, url string) (sep.Book, error) {
 
 	return sep.Book{
 		Title:        sep.GetTitle(doc),
+		Preamble:     sep.GetPreamble(doc),
 		Authors:      sep.GetAuthors(doc),
 		TOC:          sep.TableOfContents(doc, true),
 		Chapters:     sep.Content(doc),

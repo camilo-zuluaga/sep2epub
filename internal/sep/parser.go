@@ -12,10 +12,16 @@ const (
 	MainTextTag        = "#main-text"
 	MainTitleTag       = "#aueditable h1"
 	TableOfContentsTag = "#toc a"
+	PreambleTag        = "#preamble"
 )
 
 func GetTitle(doc *goquery.Document) string {
-	return strings.Join(strings.Fields(doc.Find(MainTitleTag).First().Text()), " ")
+	return normalizeWhitespace(doc.Find(MainTitleTag).First().Text())
+}
+
+func GetPreamble(doc *goquery.Document) string {
+	htmlText, _ := doc.Find(PreambleTag).First().Html()
+	return normalizeWhitespace(htmlText)
 }
 
 func Content(doc *goquery.Document) []Chapter {
@@ -59,8 +65,8 @@ func Content(doc *goquery.Document) []Chapter {
 		case List:
 			currBlock := Block{Type: tagName}
 
-			element.ChildrenFiltered("li").Each(func(i int, s *goquery.Selection) {
-				content, err := element.Html()
+			element.ChildrenFiltered("li").Each(func(i int, li *goquery.Selection) {
+				content, err := li.Html()
 				if err != nil {
 					return
 				}
@@ -105,7 +111,8 @@ func GetBibliography(doc *goquery.Document) Bibliography {
 
 	doc.Find("#bibliography").ChildrenFiltered("ul").Each(func(i int, element *goquery.Selection) {
 		element.ChildrenFiltered("li").Each(func(i int, s *goquery.Selection) {
-			text := normalizeWhitespace(strings.TrimSpace(s.Text()))
+			htmlText, _ := s.Html()
+			text := normalizeWhitespace(strings.TrimSpace(htmlText))
 			bib.List = append(bib.List, text)
 		})
 	})
