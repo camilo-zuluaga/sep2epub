@@ -132,7 +132,8 @@ func TableOfContents(doc *goquery.Document, showSubsections bool) []TOCEntry {
 	var entries []TOCEntry
 
 	doc.Find(TableOfContentsTag).Each(func(i int, link *goquery.Selection) {
-		title := normalizeWhitespace(link.Text())
+		htmlText, _ := link.Html()
+		title := normalizeWhitespace(htmlText)
 		if match := subChapter.MatchString(title); match && !showSubsections {
 			return
 		}
