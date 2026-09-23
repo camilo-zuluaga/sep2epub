@@ -34,10 +34,19 @@ type Block struct {
 // usage for epub generation
 type Book struct {
 	Title        string
+	MetaInfo     Citation
 	PubInfo      string
 	Preamble     string
 	Authors      []string
 	TOC          []TOCEntry
 	Chapters     []Chapter
 	Bibliography Bibliography
+}
+
+type Citation struct {
+	Editors   []string
+	URL       string
+	Year      int
+	Edition   string
+	Publisher string
 }

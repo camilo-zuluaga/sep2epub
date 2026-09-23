@@ -1,11 +1,16 @@
 package sep
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"regexp"
+	"sep2epub/internal/fetcher"
+	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/nickng/bibtex"
 )
 
 const (
@@ -14,6 +19,7 @@ const (
 	TableOfContentsTag = "#toc a"
 	PreambleTag        = "#preamble"
 	Pubinfo            = "#pubinfo"
+	CitationInfoURL    = "https://plato.stanford.edu/cgi-bin/encyclopedia/archinfo.cgi?entry=consciousness"
 )
 
 func GetTitle(doc *goquery.Document) string {
@@ -87,6 +93,23 @@ func Content(doc *goquery.Document) []Chapter {
 	return chapters
 }
 
+func parseHTMLTag(s string) (HTMLTag, error) {
+	switch strings.ToLower(s) {
+	case "h2":
+		return Heading2, nil
+	case "h3":
+		return Heading3, nil
+	case "p":
+		return Paragraph, nil
+	case "blockquote":
+		return BlockQuote, nil
+	case "ul":
+		return List, nil
+	default:
+		return Unknown, fmt.Errorf("error parsing HTML tag: %q", s)
+	}
+}
+
 func GetAuthors(doc *goquery.Document) []string {
 	var authors []string
 
@@ -143,23 +166,76 @@ func TableOfContents(doc *goquery.Document, showSubsections bool) []TOCEntry {
 	return entries
 }
 
-func normalizeWhitespace(value string) string {
-	return strings.Join(strings.Fields(value), " ")
+func GetCitation(ctx context.Context, url string) Citation {
+	client := fetcher.New()
+	body, err := client.Fetch(ctx, CitationInfoURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	t, _ := doc.Find("pre").Html()
+	c, err := ParseCitation(t)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return c
 }
 
-func parseHTMLTag(s string) (HTMLTag, error) {
-	switch strings.ToLower(s) {
-	case "h2":
-		return Heading2, nil
-	case "h3":
-		return Heading3, nil
-	case "p":
-		return Paragraph, nil
-	case "blockquote":
-		return BlockQuote, nil
-	case "ul":
-		return List, nil
-	default:
-		return Unknown, fmt.Errorf("error parsing HTML tag: %q", s)
+func citationURL(url string) string {
+	extractName :=
+
+}
+
+func ParseCitation(source string) (Citation, error) {
+	bib, err := bibtex.Parse(strings.NewReader(source))
+	if err != nil {
+		return Citation{}, fmt.Errorf("parse BibTeX: %w", err)
 	}
+
+	if len(bib.Entries) == 0 {
+		return Citation{}, fmt.Errorf("citation contains no entries")
+	}
+
+	entry := bib.Entries[0]
+
+	year, err := strconv.Atoi(value(entry, "year"))
+	if err != nil {
+		return Citation{}, fmt.Errorf("invalid year: %w", err)
+	}
+
+	return Citation{
+		URL:       cleanURL(value(entry, "howpublished")),
+		Year:      year,
+		Edition:   cleanEdition(value(entry, "edition")),
+		Publisher: value(entry, "publisher"),
+	}, nil
+}
+
+func value(entry *bibtex.BibEntry, key string) string {
+	field, exists := entry.Fields[key]
+	if !exists {
+		return ""
+	}
+
+	return field.String()
+}
+
+func cleanURL(url string) string {
+	return url[5 : len(url)-1]
+}
+
+func cleanEdition(e string) string {
+	return strings.ReplaceAll(
+		strings.ReplaceAll(e, "{", ""),
+		"}", "")
+}
+
+func normalizeWhitespace(value string) string {
+	return strings.Join(strings.Fields(value), " ")
 }
