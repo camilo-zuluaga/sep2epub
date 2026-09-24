@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"sep2epub/internal/fetcher"
 	"strconv"
 	"strings"
 
@@ -19,7 +18,7 @@ const (
 	TableOfContentsTag = "#toc a"
 	PreambleTag        = "#preamble"
 	Pubinfo            = "#pubinfo"
-	CitationInfoURL    = "https://plato.stanford.edu/cgi-bin/encyclopedia/archinfo.cgi?entry=consciousness"
+	CitationInfoURL    = "https://plato.stanford.edu/cgi-bin/encyclopedia/archinfo.cgi?entry=%s"
 )
 
 func GetTitle(doc *goquery.Document) string {
@@ -167,8 +166,9 @@ func TableOfContents(doc *goquery.Document, showSubsections bool) []TOCEntry {
 }
 
 func GetCitation(ctx context.Context, url string) Citation {
-	client := fetcher.New()
-	body, err := client.Fetch(ctx, CitationInfoURL)
+	client := NewFetcher()
+	fmt.Println(citationURL(url))
+	body, err := client.Fetch(ctx, citationURL(url))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -188,8 +188,12 @@ func GetCitation(ctx context.Context, url string) Citation {
 }
 
 func citationURL(url string) string {
-	extractName :=
-
+	if url[len(url)-1] == '/' {
+		url = url[:len(url)-1]
+	}
+	s := strings.Split(url, "/")
+	extractedName := s[len(s)-1]
+	return fmt.Sprintf(CitationInfoURL, extractedName)
 }
 
 func ParseCitation(source string) (Citation, error) {
