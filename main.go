@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"sep2epub/internal/epub"
-	"sep2epub/internal/fetcher"
 	"sep2epub/internal/sep"
 
 	"github.com/PuerkitoBio/goquery"
@@ -38,17 +37,18 @@ func debugPrint(chapters []sep.Chapter, chapterNum int) {
 }
 
 func main() {
-	book, err := loadBook(context.Background(), "https://plato.stanford.edu/entries/consciousness/")
+	book, err := loadBook(context.Background(), "https://plato.stanford.edu/entries/parenthood/")
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if err := epub.Generate(book); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func loadBook(ctx context.Context, url string) (sep.Book, error) {
-	client := fetcher.New()
+	client := sep.NewFetcher()
 	body, err := client.Fetch(ctx, url)
 	if err != nil {
 		return sep.Book{}, fmt.Errorf("load book: %w", err)
@@ -62,6 +62,7 @@ func loadBook(ctx context.Context, url string) (sep.Book, error) {
 
 	return sep.Book{
 		Title:        sep.GetTitle(doc),
+		MetaInfo:     sep.GetCitation(ctx, url),
 		PubInfo:      sep.GetPubInfo(doc),
 		Preamble:     sep.GetPreamble(doc),
 		Authors:      sep.GetAuthors(doc),
