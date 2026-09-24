@@ -22,7 +22,7 @@ func Generate(book sep.Book) error {
 	}
 	e.SetAuthor(strings.Join(book.Authors, ", "))
 
-	imagePath, err := e.AddImage("./sep-man-blackshadow.svg", "sep-logo.svg")
+	imagePath, err := e.AddImage("internal/epub/logo/sep-man-blackshadow.svg", "sep-logo.svg")
 	if err != nil {
 		return fmt.Errorf("add cover image: %w", err)
 	}
@@ -42,7 +42,6 @@ func sections(book sep.Book, imagePath string) []section {
 	s := []section{
 		{title: "", body: coverHTML(book, imagePath), filename: "cover.xhtml"},
 		{title: "Preamble", body: preambleHTML(book), filename: "preamble.xhtml"},
-		// {title: "Table of Contents", body: tocHTML(book.TOC), filename: "toc.xhtml"},
 	}
 
 	for i, chapter := range book.Chapters {
@@ -183,23 +182,69 @@ func preambleHTML(b sep.Book) string {
 func coverHTML(book sep.Book, imagePath string) string {
 	var builder strings.Builder
 
+	title := html.EscapeString(book.Title)
+	sourceURL := html.EscapeString(book.MetaInfo.URL)
+	authors := html.EscapeString(strings.Join(book.Authors, ", "))
+
 	builder.WriteString(`
-		<div style="
-			text-align: center;
-			max-width: 35em;
-			margin: 0 auto;
-			padding: 3em 1.5em;
-		">
+	<div style="
+		max-width: 38em;
+		margin: 0 auto;
+		padding: 2em 1.5em;
+		text-align: center;
+		font-family: serif;
+		line-height: 1.4;
+	">
+
+		<p style="font-size: 0.85em; margin-bottom: 0.3em;">
+			EPUB version of the entry
+		</p>
 	`)
 
 	builder.WriteString(`
+		<p style="
+			font-size: 1.1em;
+			margin-top: 0;
+			margin-bottom: 0.5em;
+		">`)
+	builder.WriteString(title)
+	builder.WriteString("</p>\n")
+
+	if book.MetaInfo.URL != "" {
+		builder.WriteString(`
+			<p style="
+				font-size: 0.75em;
+				margin: 0.4em 0;
+			">
+				<a href="`)
+		builder.WriteString(sourceURL)
+		builder.WriteString(`">`)
+		builder.WriteString(sourceURL)
+		builder.WriteString(`</a>
+			</p>
+		`)
+	}
+
+	if book.MetaInfo.Edition != "" {
+		builder.WriteString(`
+			<p style="
+				font-size: 0.85em;
+				margin: 0.5em 0 1.8em;
+			">
+				from the `)
+		builder.WriteString(html.EscapeString(book.MetaInfo.Edition))
+		builder.WriteString(` edition of the
+			</p>
+		`)
+	}
+
+	builder.WriteString(`
 		<h1 style="
-			font-family: serif;
 			font-size: 2em;
 			font-weight: normal;
 			font-variant: small-caps;
 			letter-spacing: 0.06em;
-			line-height: 1.35;
+			line-height: 1.3;
 			margin: 0;
 		">
 			Stanford Encyclopedia<br/>
@@ -209,8 +254,8 @@ func coverHTML(book sep.Book, imagePath string) string {
 
 	builder.WriteString(`
 		<div style="
-			height: 14em;
-			margin: 2em auto;
+			height: 10em;
+			margin: 1.5em auto;
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -218,11 +263,11 @@ func coverHTML(book sep.Book, imagePath string) string {
 			<img src="`)
 	builder.WriteString(html.EscapeString(imagePath))
 	builder.WriteString(`"
-				alt="Stanford Encyclopedia of Philosophy"
+				alt="Stanford Encyclopedia of Philosophy logo"
 				style="
 					display: block;
-					max-width: 10em;
-					max-height: 12em;
+					max-width: 7em;
+					max-height: 9em;
 					width: auto;
 					height: auto;
 					margin: 0 auto;
@@ -232,39 +277,88 @@ func coverHTML(book sep.Book, imagePath string) string {
 	`)
 
 	builder.WriteString(`
-		<h2 style="
-			font-family: serif;
-			font-size: 1.4em;
-			font-weight: normal;
-			margin: 0 0 1em 0;
+		<div style="
+			font-size: 0.72em;
+			line-height: 1.45;
+			margin: 0 auto 2em;
 		">
+			<p>
+				Co-Principal Editors:
+				Edward N. Zalta and Uri Nodelman<br/>
+
+				Associate Editors:
+				Colin Allen, Hannah Kim, and Paul Oppenheimer<br/>
+
+				Faculty Sponsors:
+				R. Lanier Anderson and Thomas Icard<br/>
+
+				Editorial Board:
+				<a href="https://plato.stanford.edu/board.html">
+					https://plato.stanford.edu/board.html
+				</a><br/>
+
+				Library of Congress ISSN: 1095-5054
+			</p>
+		</div>
 	`)
-	builder.WriteString(html.EscapeString(book.Title))
-	builder.WriteString("</h2>\n")
 
-	if len(book.Authors) > 0 {
-		builder.WriteString(`
-			<p style="
-				font-family: serif;
-				font-size: 1em;
-				line-height: 1.6;
-				margin: 0;
-			">
-				<span>By</span><br/>
-		`)
+	builder.WriteString(`
+		<div style="
+			font-size: 0.72em;
+			font-style: italic;
+			line-height: 1.4;
+			margin: 2em 0;
+		">
+			<p>
+				Stanford Encyclopedia of Philosophy<br/>
+				Copyright © 2026 by the publisher<br/>
+				The Metaphysics Research Lab<br/>
+				Department of Philosophy<br/>
+				Stanford University, Stanford, CA 94305
+			</p>
+		</div>
+	`)
 
-		for i, author := range book.Authors {
-			if i > 0 {
-				builder.WriteString("<br/>\n")
-			}
+	builder.WriteString(`
+		<div style="
+			font-size: 0.8em;
+			line-height: 1.45;
+			margin-top: 2em;
+		">
+			<p>
+				<span style="font-size: 1.15em;">`)
+	builder.WriteString(title)
+	builder.WriteString("</span><br/>\n")
 
-			builder.WriteString(html.EscapeString(author))
+	if book.MetaInfo.Year > 0 {
+		builder.WriteString("Copyright © ")
+		builder.WriteString(fmt.Sprintf("%d", book.MetaInfo.Year))
+
+		if len(book.Authors) == 1 {
+			builder.WriteString(" by the author<br/>\n")
+		} else {
+			builder.WriteString(" by the authors<br/>\n")
 		}
-
-		builder.WriteString("</p>\n")
 	}
 
-	builder.WriteString("</div>\n")
+	if authors != "" {
+		builder.WriteString(authors)
+		builder.WriteString("<br/>\n")
+	}
+
+	builder.WriteString(`
+				All rights reserved.
+			</p>
+
+			<p>
+				Copyright policy:
+				<a href="https://plato.stanford.edu/info/copyright/">
+					https://plato.stanford.edu/info/copyright/
+				</a>
+			</p>
+		</div>
+	</div>
+	`)
 
 	return builder.String()
 }
