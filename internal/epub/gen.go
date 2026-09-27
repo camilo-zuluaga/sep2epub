@@ -15,7 +15,7 @@ type section struct {
 	title, body, filename string
 }
 
-func Generate(book sep.Book) error {
+func Generate(book sep.Book, outputPath string) error {
 	e, err := epub.NewEpub(book.Title)
 	if err != nil {
 		return fmt.Errorf("create EPUB: %w", err)
@@ -32,7 +32,8 @@ func Generate(book sep.Book) error {
 			return fmt.Errorf("add section %q: %w", s.title, err)
 		}
 	}
-	if err := e.Write(fmt.Sprintf("%s.epub", book.Title)); err != nil {
+
+	if err := e.Write(outputPath); err != nil {
 		return fmt.Errorf("err writing EPUB: %w", err)
 	}
 	return nil
