@@ -167,7 +167,6 @@ func TableOfContents(doc *goquery.Document, showSubsections bool) []TOCEntry {
 
 func GetCitation(ctx context.Context, url string) Citation {
 	client := NewFetcher()
-	fmt.Println(citationURL(url))
 	body, err := client.Fetch(ctx, citationURL(url))
 	if err != nil {
 		log.Fatal(err)
