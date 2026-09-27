@@ -103,6 +103,7 @@ func loadBook(ctx context.Context, url string) (sep.Book, error) {
 func defaultOutputPath(sourceURL *url.URL) string {
 	path := strings.Trim(sourceURL.Path, "/")
 	entryName := filepath.Base(path)
+	entryName = strings.ToUpper(string(entryName[0])) + entryName[1:]
 
 	if entryName == "." || entryName == "/" || entryName == "" {
 		return "book.epub"
